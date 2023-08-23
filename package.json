@@ -9,13 +9,15 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage:go"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "go-struct-size.helloWorld",
-        "title": "Hello World"
+        "command": "go-struct-size.toggle",
+        "title": "Toggle printing of struct and fields size"
       }
     ]
   },

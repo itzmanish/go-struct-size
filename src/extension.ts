@@ -1,26 +1,70 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
+import { calculateFieldSize, findStructDeclaration } from "./calculate";
+import { calculated, clearDecorations, setDecorations } from './decorator';
+//Create output channel
+let output = vscode.window.createOutputChannel("Struct Size");
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+let isActive = true;
+
 export function activate(context: vscode.ExtensionContext) {
+  vscode.workspace.onDidChangeTextDocument(ev => processActiveFile(ev.document));
+  vscode.window.onDidChangeActiveTextEditor(ev => processActiveFile(ev?.document));
+  processActiveFile(vscode.window.activeTextEditor?.document);
+  let disposable = vscode.commands.registerCommand(
+    "go-struct-size.toggle",
+    () => {
+      isActive = !isActive;
+      if (!isActive) {
+        deactivate();
+      }
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "go-struct-size" is now active!');
+      processActiveFile();
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('go-struct-size.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from Go Struct Size!');
-	});
+      output.show();
+    }
+  );
 
-	context.subscriptions.push(disposable);
+  context.subscriptions.push(disposable);
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+  clearDecorations();
+}
+
+function processActiveFile(document?: vscode.TextDocument) {
+  if (!document) {
+    return;
+  }
+  const structRange = findStructDeclaration(document);
+  console.log(JSON.stringify(structRange, null, 2));
+  setDecorations(document.fileName, []);
+  if (structRange) {
+    structRange?.forEach((entry) => {
+      const startPosition = new vscode.Position(entry.startLine, 0);
+      const endPosition = new vscode.Position(entry.endLine, 0);
+      const selection = new vscode.Selection(startPosition, endPosition);
+      let start = entry.startLine + 1;
+      let end = entry.endLine;
+      while (start !== end) {
+        const { text } = document.lineAt(
+          start
+        );
+        const fieldSize = calculateFieldSize(text);
+        if (!fieldSize) {
+          start += 1;
+          continue;
+        }
+        output.appendLine(JSON.stringify(fieldSize, null, 2));
+        calculated(document.fileName, { line: start + 1, size: fieldSize.fieldSize });
+        start += 1;
+      }
+    });
+  } else {
+    vscode.window.showInformationMessage("No struct declaration found.");
+  }
+
+  return structRange;
+}
