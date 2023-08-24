@@ -7,7 +7,7 @@ This is inspired by the famous vscode extension [import cost](https://github.com
 
 - Show size of fields in the struct
 
-\!\[size of field\]\(images/screenshot.png\)
+![size of field](images/screenshot.png)
 
 ## Known Issues
 
