@@ -1,4 +1,4 @@
-# Struct Size Calculation
+# Struct Size
 
 Go Struct size is a vscode extension to print the size of fields in the struct. It will help you understand how much space your struct is going to take in the memory.
 This is inspired by the famous vscode extension [import cost](https://github.com/wix/import-cost).
